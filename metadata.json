@@ -1,0 +1,5 @@
+{
+  "name": "AgentFlow UI",
+  "description": "A web-based UI to declaratively build AI/data workflows as Python objects and export them as structured JSON IR. Inspired by the agentflow Python package concept.",
+  "requestFramePermissions": []
+}
