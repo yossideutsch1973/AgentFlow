@@ -6,6 +6,7 @@ import { executeWorkflow } from '../services/workflowExecutor';
 import WorkflowControls from './WorkflowControls';
 import WorkflowCanvas from './WorkflowCanvas';
 import RunControlsAndOutput from './RunControlsAndOutput';
+import { operationCatalog } from '../operations/catalog';
 
 // FIX: Added missing WorkflowEditorProps interface definition.
 interface WorkflowEditorProps {
@@ -55,44 +56,24 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflow, onUpdate, onD
 
     if (reactFlowWrapper) {
         const bounds = reactFlowWrapper.getBoundingClientRect();
-        // Add node to the center of the current view
+        // Place node near center of viewport
         position = {
-            x: bounds.width / 2 - 150, // rough center
+            x: bounds.width / 2 - 150,
             y: bounds.height / 2 - 100,
         };
     }
 
-    const newNode: FlowNode = { id: newId, op, position };
+    const definition = operationCatalog[op];
+    const defaultInputs = definition?.defaultInputs ? { ...definition.defaultInputs } : undefined;
+    const defaultParams = definition?.defaultParams ? structuredClone(definition.defaultParams) : undefined;
 
-    switch(op) {
-        case OpType.INPUT:
-            newNode.params = { type: 'string' };
-            break;
-        case OpType.CONST:
-            newNode.params = { value: '""' };
-            break;
-        case OpType.IMAGE:
-            newNode.params = { value: null };
-            break;
-        case OpType.MAP:
-            newNode.inputs = { each: undefined};
-            newNode.params = { fn: '' };
-            break;
-        case OpType.HTTP:
-            newNode.inputs = { url: undefined };
-            newNode.params = { method: 'GET' };
-            break;
-        case OpType.SEARCH:
-            newNode.inputs = { query: undefined };
-            break;
-        case OpType.LLM:
-            newNode.inputs = { prompt: undefined };
-            newNode.params = { model: 'gemini-2.5-flash', out: 'text', temperature: 0.5 };
-            break;
-        case OpType.OUTPUT:
-            newNode.inputs = { from_node: undefined };
-            break;
-    }
+    const newNode: FlowNode = {
+      id: newId,
+      op,
+      position,
+      ...(defaultInputs ? { inputs: defaultInputs } : {}),
+      ...(defaultParams ? { params: defaultParams } : {}),
+    };
 
     updateWorkflow({ nodes: [...nodes, newNode] });
   };
@@ -169,7 +150,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflow, onUpdate, onD
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Header Bar */}
       <div className="bg-slate-800/60 backdrop-blur-sm border border-white/10 rounded-lg p-4 mb-6 shadow-lg flex-shrink-0">
           <div className="flex flex-col sm:flex-row items-end justify-between gap-4">
@@ -215,10 +196,13 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflow, onUpdate, onD
       )}
 
       {/* Main Content Area */}
-      <div className="flex-grow flex flex-col lg:flex-row gap-8 min-h-0">
-        
+      <div className="flex-1 min-h-0 w-full grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_320px]">
+
         {/* Left Column: Workflow Canvas */}
-        <div className="flex-grow rounded-lg relative min-h-[400px] lg:min-h-0" ref={canvasContainerRef}>
+        <div
+          className="relative rounded-lg min-w-0 min-h-[520px] lg:min-h-[600px] h-full overflow-hidden"
+          ref={canvasContainerRef}
+        >
             <WorkflowCanvas 
               nodes={nodes}
               onNodesChange={handleNodesChange}
@@ -228,7 +212,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflow, onUpdate, onD
         </div>
 
         {/* Right Column: Action Panel */}
-        <div className="w-full lg:max-w-md xl:max-w-sm lg:flex-shrink-0 overflow-y-auto">
+        <div className="min-w-0 min-h-0 overflow-y-auto">
              <RunControlsAndOutput
                 nodes={nodes}
                 onRun={handleRunFlow}

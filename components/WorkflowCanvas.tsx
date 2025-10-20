@@ -117,21 +117,24 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ nodes: flowNodes, onNod
   );
 
   return (
-    <ReactFlow
-      nodes={rfNodes}
-      edges={rfEdges}
-      onNodesChange={handleNodesChange}
-      onEdgesChange={handleEdgesChange}
-      onConnect={handleConnect}
-      nodeTypes={nodeTypes}
-      fitView
-      className="bg-gray-800"
-      proOptions={{ hideAttribution: true }}
-    >
-      <Controls />
-      <MiniMap nodeStrokeWidth={3} zoomable pannable />
-      <Background gap={16} />
-    </ReactFlow>
+    <div className="absolute inset-0">
+      <ReactFlow
+        nodes={rfNodes}
+        edges={rfEdges}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={handleEdgesChange}
+        onConnect={handleConnect}
+        nodeTypes={nodeTypes}
+        fitView
+        className="bg-gray-800"
+        style={{ width: '100%', height: '100%' }}
+        proOptions={{ hideAttribution: true }}
+      >
+        <Controls />
+        <MiniMap nodeStrokeWidth={3} zoomable pannable />
+        <Background gap={16} />
+      </ReactFlow>
+    </div>
   );
 };
 

@@ -142,11 +142,12 @@ const App: React.FC = () => {
     useEffect(() => {
         if (activeWorkflowId && workflows[activeWorkflowId]) {
             setEditorWorkflow(workflows[activeWorkflowId]);
+            // Only reset isDirty when switching to a different workflow, not when workflows state updates
             setIsDirty(false);
         } else {
             setEditorWorkflow(null);
         }
-    }, [activeWorkflowId, workflows]);
+    }, [activeWorkflowId]); // Removed 'workflows' from dependencies
 
     const handleToggleSidebar = () => {
         setIsSidebarCollapsed(prev => !prev);
@@ -251,7 +252,7 @@ const App: React.FC = () => {
                 isCollapsed={isSidebarCollapsed}
                 onToggle={handleToggleSidebar}
             />
-            <main className="flex-grow flex flex-col p-4 lg:p-6 xl:p-8">
+            <main className="flex-grow flex flex-col min-h-0 w-full p-4 lg:p-6 xl:p-8">
                 {editorWorkflow ? (
                     <WorkflowEditor 
                         key={editorWorkflow.id}

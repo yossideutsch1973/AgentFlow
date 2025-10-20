@@ -34,6 +34,22 @@
 }
 </script>
 <style>
+  * {
+    box-sizing: border-box;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  #root {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
   .react-flow__background {
     background-color: #1f2937; /* gray-800 */
   }
@@ -52,10 +68,9 @@
     stroke-width: 2;
   }
 </style>
-<link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-gradient-to-br from-gray-900 to-slate-900 h-screen flex flex-col">
-    <div id="root" class="flex-grow flex"></div>
+  <body>
+    <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
