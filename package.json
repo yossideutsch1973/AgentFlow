@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "server": "tsx --env-file=.env.local server/index.ts",
-    "dev:full": "run-p server dev",
+    "server": "tsx server/index.ts",
+    "server:dev": "tsx --env-file=.env.local server/index.ts",
+    "dev:full": "run-p server:dev dev",
     "test": "vitest"
   },
   "dependencies": {

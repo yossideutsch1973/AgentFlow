@@ -1,6 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { getProvider, listProviders } from './providers';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT) || 4000;
 const DEFAULT_PROVIDER = (process.env.LLM_PROVIDER || 'google').toLowerCase();
@@ -12,6 +17,10 @@ if (!process.env.GENAI_API_KEY) {
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Serve static files from the dist directory in production
+const distPath = path.join(__dirname, '..', 'dist');
+app.use(express.static(distPath));
 
 const resolveProviderName = (name?: unknown): string => {
   if (typeof name === 'string' && name.trim()) {
@@ -110,13 +119,18 @@ app.post('/api/llm', async (req, res) => {
   }
 });
 
+// Serve index.html for all other routes (SPA fallback)
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[agentflow-ui] Unhandled server error:', err);
   res.status(500).json({ error: 'Internal server error.' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   const providers = listProviders();
-  console.log(`[agentflow-ui] API server listening on http://localhost:${PORT}`);
+  console.log(`[agentflow-ui] API server listening on http://0.0.0.0:${PORT}`);
   console.log(`[agentflow-ui] Registered LLM providers: ${providers.join(', ') || 'none'}`);
 });
