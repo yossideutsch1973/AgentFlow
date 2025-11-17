@@ -80,4 +80,34 @@ describe('executeWorkflow', () => {
 
     await expect(executeWorkflow(nodes, {}, adapters)).rejects.toThrow(WorkflowExecutionError);
   });
+
+  it('executes loop nodes with a constant body', async () => {
+    const nodes: FlowNode[] = [
+      baseNode('const1', OpType.CONST, { params: { value: '3' } }),
+      baseNode('const2', OpType.CONST, { params: { value: '"hello"' } }),
+      baseNode('loop1', OpType.LOOP, {
+        inputs: { count: 'const1', body: 'const2' },
+      }),
+    ];
+
+    const result = await executeWorkflow(nodes, {}, createAdapters());
+    expect(result.loop1).toEqual(['hello', 'hello', 'hello']);
+  });
+
+  it('executes loop nodes with an iteration variable', async () => {
+    const nodes: FlowNode[] = [
+      baseNode('const1', OpType.CONST, { params: { value: '3' } }),
+      baseNode('iter1', OpType.ITERATION_VAR, { params: { loopId: 'loop1' } }),
+      baseNode('map1', OpType.MAP, {
+        inputs: { each: 'iter1' },
+        params: { fn: 'Item: {{ item }}' },
+      }),
+      baseNode('loop1', OpType.LOOP, {
+        inputs: { count: 'const1', body: 'map1' },
+      }),
+    ];
+
+    const result = await executeWorkflow(nodes, {}, createAdapters());
+    expect(result.loop1).toEqual(['Item: 0', 'Item: 1', 'Item: 2']);
+  });
 });

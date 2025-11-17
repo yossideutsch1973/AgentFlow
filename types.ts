@@ -5,6 +5,8 @@ export enum OpType {
   MAP = 'map',
   HTTP = 'http',
   LLM = 'llm',
+  LOOP = 'loop',
+  ITERATION_VAR = 'iteration_var',
   SEARCH = 'search',
   OUTPUT = 'output',
   IMAGE = 'image',

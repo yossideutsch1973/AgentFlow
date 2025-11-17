@@ -96,6 +96,28 @@ export const operationCatalog: Record<OpType, OperationDefinition> = {
     defaultInputs: { prompt: undefined, system: undefined, image: undefined },
     defaultParams: { model: 'gemini-2.5-flash', out: 'text', temperature: 0.5, provider: 'google' },
   },
+  [OpType.LOOP]: {
+    type: OpType.LOOP,
+    label: 'Loop',
+    paletteClasses: 'bg-green-500/20 text-green-300 hover:bg-green-500/30 ring-1 ring-green-500/30',
+    nodeBorderClass: 'border-green-500',
+    icon: makeIcon(<path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.695v-4.992m0 0h-4.992m4.992 0l-3.181-3.183a8.25 8.25 0 00-11.664 0l-3.181 3.183" />),
+    inputHandles: [
+        { id: 'count', label: 'Count' },
+        { id: 'body', label: 'Body' },
+    ],
+    defaultInputs: { count: undefined, body: undefined },
+    defaultParams: {},
+  },
+  [OpType.ITERATION_VAR]: {
+    type: OpType.ITERATION_VAR,
+    label: 'Iteration Variable',
+    paletteClasses: 'bg-gray-500/20 text-gray-300 hover:bg-gray-500/30 ring-1 ring-gray-500/30',
+    nodeBorderClass: 'border-gray-500',
+    icon: makeIcon(<path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />),
+    inputHandles: [],
+    defaultParams: { loopId: '' },
+  },
   [OpType.OUTPUT]: {
     type: OpType.OUTPUT,
     label: 'Output',
