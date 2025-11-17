@@ -15,8 +15,9 @@ import ReactFlow, {
   applyNodeChanges,
   applyEdgeChanges,
 } from 'reactflow';
-import { FlowNode, NodeId } from '../types';
+import { FlowNode, NodeId, OpType } from '../types';
 import CustomNode from './CustomNode';
+import LoopNode from './LoopNode';
 
 interface WorkflowCanvasProps {
   nodes: FlowNode[];
@@ -26,11 +27,12 @@ interface WorkflowCanvasProps {
 
 const nodeTypes = {
   custom: CustomNode,
+  loop: LoopNode,
 };
 
 const flowNodeToReactFlowNode = (node: FlowNode, onUpdateNode: any): Node => ({
   id: node.id,
-  type: 'custom',
+  type: node.op === OpType.LOOP ? 'loop' : 'custom',
   position: node.position,
   data: { ...node, onUpdateNode },
 });

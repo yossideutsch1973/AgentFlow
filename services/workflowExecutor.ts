@@ -127,6 +127,22 @@ export const executeWorkflow = async (
     const nodeMap = new Map(nodes.map(n => [n.id, n]));
     const unresolvedNodeIds = new Set<NodeId>(nodes.filter(n => n.op !== OpType.INPUT).map(n => n.id));
     
+    await _execute(unresolvedNodeIds, nodeMap, context, adapters);
+
+    if (unresolvedNodeIds.size > 0) {
+        throw new WorkflowExecutionError(`Execution failed. Could not resolve all nodes. Unresolved nodes: ${[...unresolvedNodeIds].join(', ')}. This may be due to a cycle or missing dependency.`);
+    }
+
+    // Return all intermediate and final values from the context
+    return Object.fromEntries(context);
+};
+
+async function _execute(
+    unresolvedNodeIds: Set<NodeId>,
+    nodeMap: Map<NodeId, FlowNode>,
+    context: Map<NodeId, any>,
+    adapters: OperationAdapters
+) {
     let progressMadeInLastPass = true;
     while (unresolvedNodeIds.size > 0 && progressMadeInLastPass) {
         progressMadeInLastPass = false;
@@ -163,6 +179,41 @@ export const executeWorkflow = async (
                         result = inputArray.map(item => renderTemplate(node.params?.fn || '', { item }));
                         break;
                     
+                    case OpType.ITERATION_VAR:
+                        const loopId = node.params?.loopId;
+                        if (!loopId) {
+                            throw new WorkflowExecutionError(`ITERATION_VAR node '${node.id}' requires a 'loopId' parameter.`);
+                        }
+                        result = context.get(`${loopId}.iteration`);
+                        break;
+
+                    case OpType.LOOP:
+                        const loopCount = Number(nodeInputs.count);
+                        if (isNaN(loopCount) || loopCount < 0) {
+                            throw new WorkflowExecutionError(`Input 'count' for LOOP node '${node.id}' must be a non-negative number.`);
+                        }
+
+                        const bodyNodeId = node.inputs?.body;
+                        if (!bodyNodeId) {
+                            throw new WorkflowExecutionError(`LOOP node '${node.id}' requires a 'body' input.`);
+                        }
+
+                        const bodyNode = nodeMap.get(bodyNodeId);
+                        if (!bodyNode) {
+                            throw new WorkflowExecutionError(`Could not find body node '${bodyNodeId}' for LOOP node '${node.id}'.`);
+                        }
+
+                        const loopResults = [];
+                        for (let i = 0; i < loopCount; i++) {
+                            const loopContext = new Map<NodeId, any>(context);
+                            loopContext.set(`${node.id}.iteration`, i);
+
+                            const bodyResult = await executeSubgraph(bodyNode, nodeMap, loopContext, adapters);
+                            loopResults.push(bodyResult);
+                        }
+                        result = loopResults;
+                        break;
+
                     case OpType.HTTP: {
                         const urls = ensureArrayOfStrings(nodeInputs.url);
                         if (!urls.length) {
@@ -237,11 +288,41 @@ export const executeWorkflow = async (
             }
         }
     }
-    
-    if (unresolvedNodeIds.size > 0) {
-        throw new WorkflowExecutionError(`Execution failed. Could not resolve all nodes. Unresolved nodes: ${[...unresolvedNodeIds].join(', ')}. This may be due to a cycle or missing dependency.`);
+}
+
+async function executeSubgraph(
+    startNode: FlowNode,
+    nodeMap: Map<NodeId, FlowNode>,
+    initialContext: Map<NodeId, any>,
+    adapters: OperationAdapters
+): Promise<any> {
+    const context = new Map<NodeId, any>(initialContext);
+    const nodesToExecute: FlowNode[] = [];
+    const queue: FlowNode[] = [startNode];
+    const visited = new Set<NodeId>();
+
+    while (queue.length > 0) {
+        const currentNode = queue.shift()!;
+        if (visited.has(currentNode.id)) continue;
+        visited.add(currentNode.id);
+        nodesToExecute.push(currentNode);
+
+        const dependencyIds = Object.values(currentNode.inputs || {}).filter(Boolean) as NodeId[];
+        for (const depId of dependencyIds) {
+            const depNode = nodeMap.get(depId);
+            if (depNode) {
+                queue.push(depNode);
+            }
+        }
     }
 
-    // Return all intermediate and final values from the context
-    return Object.fromEntries(context);
-};
+    const unresolvedNodeIds = new Set<NodeId>(nodesToExecute.map(n => n.id));
+
+    await _execute(unresolvedNodeIds, nodeMap, context, adapters);
+
+    if (unresolvedNodeIds.size > 0) {
+        throw new WorkflowExecutionError(`Subgraph execution failed. Unresolved nodes: ${[...unresolvedNodeIds].join(', ')}.`);
+    }
+
+    return context.get(startNode.id);
+}
