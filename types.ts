@@ -10,6 +10,9 @@ export enum OpType {
   SEARCH = 'search',
   OUTPUT = 'output',
   IMAGE = 'image',
+  EXPERT_PROMPT_ENGINEER = 'expert_prompt_engineer',
+  EXPERT_CODE_OPTIMIZER = 'expert_code_optimizer',
+  EXPERT_CLARITY_CONCISENESS = 'expert_clarity_conciseness',
 }
 
 export type NodeId = string;

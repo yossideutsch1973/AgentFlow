@@ -6,12 +6,15 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import WorkflowEditor from './components/WorkflowEditor';
 
-const initialNodes: FlowNode[] = [
-    { id: 'image_to_describe', op: OpType.IMAGE, params: { value: null }, position: { x: 50, y: 150 } },
-    { id: 'prompt', op: OpType.CONST, params: { value: '"Describe this image in detail for a blog post."' }, position: { x: 50, y: 350 } },
-    { id: 'vision_llm', op: OpType.LLM, inputs: { prompt: 'prompt', image: 'image_to_describe' }, params: { model: 'gemini-2.5-flash-image', temperature: 0.5 }, position: { x: 400, y: 225 } },
-    { id: 'description_output', op: OpType.OUTPUT, inputs: { from_node: 'vision_llm' }, position: { x: 750, y: 225 } },
+const expertAgentWorkflow: FlowNode[] = [
+    { id: 'initial_prompt', op: OpType.CONST, params: { value: '"Write a python function to find the nth fibonacci number."' }, position: { x: 50, y: 150 } },
+    { id: 'prompt_engineer', op: OpType.EXPERT_PROMPT_ENGINEER, inputs: { prompt: 'initial_prompt' }, position: { x: 350, y: 150 } },
+    { id: 'code_optimizer', op: OpType.EXPERT_CODE_OPTIMIZER, inputs: { prompt: 'prompt_engineer' }, position: { x: 650, y: 150 } },
+    { id: 'clarity_conciseness', op: OpType.EXPERT_CLARITY_CONCISENESS, inputs: { prompt: 'code_optimizer' }, position: { x: 950, y: 150 } },
+    { id: 'final_prompt', op: OpType.OUTPUT, inputs: { from_node: 'clarity_conciseness' }, position: { x: 1250, y: 150 } },
 ];
+
+const initialNodes: FlowNode[] = expertAgentWorkflow;
 
 
 const createNewWorkflow = (name = 'Untitled Flow'): StoredWorkflow => {
